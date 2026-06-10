@@ -15,6 +15,7 @@ import {
   writeConsentRecord,
 } from "../lib/storage";
 import {
+  deleteConsentCookies,
   initDataLayer,
   pushConsentEvent,
   setConsentDefault,
@@ -123,6 +124,7 @@ export function rejectAll() {
     personalisation: false,
   };
   const record = persist(prefs, "reject_all", config);
+  deleteConsentCookies(prefs);
   pushConsentEvent("consent_rejected", prefs);
   setState({ record, showBanner: false, showModal: false });
 }
@@ -132,6 +134,7 @@ export function saveCustom(partial: Omit<ConsentPreferences, "necessary">) {
   if (!config) return;
   const prefs: ConsentPreferences = { necessary: true, ...partial };
   const record = persist(prefs, "custom", config);
+  deleteConsentCookies(prefs);
   pushConsentEvent("consent_customised", prefs);
   setState({ record, showBanner: false, showModal: false });
 }

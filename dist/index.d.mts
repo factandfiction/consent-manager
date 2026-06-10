@@ -1,5 +1,11 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 
+type ResolvedConfig = Omit<Required<ConsentConfig>, "copy" | "classNames"> & {
+    copy: ConsentCopy;
+    classNames: Required<ConsentClassNames>;
+    categories: ConsentCategory[];
+};
+
 type ConsentCategory = "analytics" | "marketing" | "personalisation";
 interface ConsentPreferences {
     necessary: true;
@@ -131,6 +137,7 @@ interface ConsentClassNames {
     toggleTrack?: string;
     /** Toggle thumb — the sliding handle. */
     toggleThumb?: string;
+    baseButton?: string;
     /** "Accept all" — used in both the banner and the modal footer. */
     acceptButton?: string;
     /** "Reject all" — used in both the banner and the modal footer. */
@@ -151,15 +158,7 @@ declare function ConsentBanner(): react_jsx_runtime.JSX.Element | null;
 
 declare function PreferencesModal(): react_jsx_runtime.JSX.Element | null;
 
-declare function ConsentButton(): react_jsx_runtime.JSX.Element | null;
-
 declare function GTMScript(): react_jsx_runtime.JSX.Element | null;
-
-type ResolvedConfig = Omit<Required<ConsentConfig>, "copy" | "classNames"> & {
-    copy: ConsentCopy;
-    classNames: Required<ConsentClassNames>;
-    categories: ConsentCategory[];
-};
 
 declare function acceptAll(): void;
 declare function rejectAll(): void;
@@ -191,4 +190,4 @@ declare function useConsent(): {
     isGranted: typeof isGranted;
 };
 
-export { ConsentBanner, ConsentButton, type ConsentCategory, type ConsentClassNames, type ConsentConfig, type ConsentCopy, ConsentManager, type ConsentMethod, type ConsentPreferences, type ConsentRecord, GTMScript, PreferencesModal, useConsent };
+export { ConsentBanner, type ConsentCategory, type ConsentClassNames, type ConsentConfig, type ConsentCopy, ConsentManager, type ConsentMethod, type ConsentPreferences, type ConsentRecord, GTMScript, PreferencesModal, useConsent };

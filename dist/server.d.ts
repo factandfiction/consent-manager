@@ -163,6 +163,7 @@ interface ConsentClassNames {
     toggleTrack?: string;
     /** Toggle thumb — the sliding handle. */
     toggleThumb?: string;
+    baseButton?: string;
     /** "Accept all" — used in both the banner and the modal footer. */
     acceptButton?: string;
     /** "Reject all" — used in both the banner and the modal footer. */

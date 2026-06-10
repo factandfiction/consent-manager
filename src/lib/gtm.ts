@@ -67,6 +67,37 @@ export function pushConsentEvent(
   })
 }
 
+// ─── Cookie deletion ──────────────────────────────────────────────────────────
+
+const ANALYTICS_COOKIE_PATTERNS = [/^_ga/, /^_gid$/, /^_gat/, /^_gcl_/]
+const MARKETING_COOKIE_PATTERNS = [/^_gcl_aw$/, /^_gcl_dc$/, /^_gcl_gb$/, /^IDE$/, /^DSID$/]
+
+function deleteCookieOnAllPaths(name: string): void {
+  const domains = [location.hostname, '.' + location.hostname, '.' + location.hostname.replace(/^www\./, '')]
+  for (const domain of domains) {
+    for (const path of ['/', '/']) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; domain=${domain}`
+    }
+  }
+  // also delete without explicit domain
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+}
+
+export function deleteConsentCookies(prefs: Pick<ConsentPreferences, 'analytics' | 'marketing'>): void {
+  if (typeof window === 'undefined') return
+  const patterns: RegExp[] = []
+  if (!prefs.analytics) patterns.push(...ANALYTICS_COOKIE_PATTERNS)
+  if (!prefs.marketing) patterns.push(...MARKETING_COOKIE_PATTERNS)
+  if (patterns.length === 0) return
+
+  document.cookie.split(';').forEach((c) => {
+    const name = c.trim().split('=')[0]
+    if (patterns.some((p) => p.test(name))) {
+      deleteCookieOnAllPaths(name)
+    }
+  })
+}
+
 // ─── Global type augmentation ─────────────────────────────────────────────────
 
 declare global {
