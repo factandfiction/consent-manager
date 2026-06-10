@@ -17,7 +17,7 @@ GDPR-compliant cookie consent for Next.js with Google Tag Manager Consent Mode v
 ## Installation
 
 ```bash
-npm install git+https://github.com/darksymm/consent-manager.git
+npm install git+https://github.com/factandfiction/consent-manager.git
 ```
 
 ### Tailwind CSS setup

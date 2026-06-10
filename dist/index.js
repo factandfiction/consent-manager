@@ -147,7 +147,7 @@ var DEFAULT_CLASSNAMES = {
   bannerDescription: "mb-4 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400",
   // Modal
   overlay: "bg-black/45",
-  modal: "max-w-lg rounded-t-xl sm:rounded-xl bg-white dark:bg-neutral-900 p-6",
+  modal: "rounded-t-xl sm:rounded-xl bg-white dark:bg-neutral-900 p-6",
   modalTitle: "text-base font-semibold text-neutral-900 dark:text-neutral-50",
   closeButton: "rounded-md p-1 text-xl leading-none text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 transition-colors",
   // Categories
@@ -474,7 +474,7 @@ function ConsentBanner() {
       role: "region",
       "aria-label": copy.bannerTitle,
       className: cn(
-        "fixed bottom-6 right-6 z-[9999] max-w-sm",
+        "fixed bottom-3 right-3 ml-3 mt-3 md:bottom-6 md:right-6 md:ml-6 md:mt-6 z-[9999] max-w-[54ch]",
         "animate-in fade-in slide-in-from-bottom-3 duration-200",
         classNames.banner
       ),
@@ -565,7 +565,7 @@ function PreferencesModal() {
         "div",
         {
           className: cn(
-            "w-full max-h-[90vh] overflow-y-auto",
+            "w-full max-w-[64ch] max-h-[90vh] overflow-y-auto",
             "animate-in slide-in-from-bottom-4 duration-200",
             classNames.modal
           ),

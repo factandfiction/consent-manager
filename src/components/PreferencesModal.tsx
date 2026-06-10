@@ -72,7 +72,7 @@ export function PreferencesModal() {
     >
       <div
         className={cn(
-          "w-full max-h-[90vh] overflow-y-auto",
+          "w-full max-w-[64ch] max-h-[90vh] overflow-y-auto",
           "animate-in slide-in-from-bottom-4 duration-200",
           classNames.modal,
         )}

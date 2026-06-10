@@ -105,7 +105,7 @@ export const DEFAULT_CLASSNAMES: Required<ConsentClassNames> = {
 
   // Modal
   overlay: "bg-black/45",
-  modal: "max-w-lg rounded-t-xl sm:rounded-xl bg-white dark:bg-neutral-900 p-6",
+  modal: "rounded-t-xl sm:rounded-xl bg-white dark:bg-neutral-900 p-6",
   modalTitle: "text-base font-semibold text-neutral-900 dark:text-neutral-50",
   closeButton:
     "rounded-md p-1 text-xl leading-none text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 transition-colors",

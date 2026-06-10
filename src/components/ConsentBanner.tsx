@@ -20,7 +20,7 @@ export function ConsentBanner() {
       role="region"
       aria-label={copy.bannerTitle}
       className={cn(
-        "fixed bottom-6 right-6 z-[9999] max-w-sm",
+        "fixed bottom-3 right-3 ml-3 mt-3 md:bottom-6 md:right-6 md:ml-6 md:mt-6 z-[9999] max-w-[38ch]",
         "animate-in fade-in slide-in-from-bottom-3 duration-200",
         classNames.banner,
       )}
