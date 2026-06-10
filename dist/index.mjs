@@ -122,13 +122,14 @@ var DEFAULT_CLASSNAMES = {
   toggleTrack: "absolute inset-0 rounded-full transition-colors duration-200 bg-neutral-300 peer-checked:bg-neutral-900 dark:bg-neutral-600 dark:peer-checked:bg-white peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
   toggleThumb: "absolute left-0.5 top-0.5 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-4 dark:peer-checked:bg-neutral-900",
   // Buttons
-  acceptButton: "inline-flex items-center justify-center rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white transition-opacity hover:opacity-80 dark:bg-white dark:text-neutral-900",
-  rejectButton: "inline-flex items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-xs font-medium text-neutral-900 transition-opacity hover:opacity-80 dark:border-neutral-600 dark:text-neutral-100",
-  manageButton: "inline-flex items-center justify-center px-1 py-2 text-xs font-medium text-neutral-400 transition-opacity hover:opacity-80 dark:text-neutral-500",
-  saveButton: "inline-flex items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-xs font-medium text-neutral-900 transition-opacity hover:opacity-80 dark:border-neutral-600 dark:text-neutral-100"
+  baseButton: "inline-flex items-center justify-center rounded-lg px-4 py-2 text-xs font-medium transition-opacity hover:opacity-80",
+  acceptButton: "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900",
+  rejectButton: "border border-neutral-300 text-neutral-900 dark:border-neutral-600 dark:text-neutral-100",
+  manageButton: "px-1 py-2 text-neutral-400 hover:opacity-80 dark:text-neutral-500",
+  saveButton: "border border-neutral-300 text-neutral-900 dark:border-neutral-600 dark:text-neutral-100"
 };
 function resolveConfig(config) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
   return {
     gtmId: config.gtmId,
     policyVersion: config.policyVersion,
@@ -139,14 +140,19 @@ function resolveConfig(config) {
     waitForUpdate: (_e = config.waitForUpdate) != null ? _e : 500,
     auditEndpoint: (_f = config.auditEndpoint) != null ? _f : "",
     copy: __spreadProps(__spreadValues(__spreadValues({}, DEFAULT_COPY), config.copy), {
-      categories: __spreadValues(__spreadValues({}, DEFAULT_COPY.categories), (_g = config.copy) == null ? void 0 : _g.categories)
+      categories: {
+        necessary: __spreadValues(__spreadValues({}, DEFAULT_COPY.categories.necessary), (_h = (_g = config.copy) == null ? void 0 : _g.categories) == null ? void 0 : _h.necessary),
+        analytics: __spreadValues(__spreadValues({}, DEFAULT_COPY.categories.analytics), (_j = (_i = config.copy) == null ? void 0 : _i.categories) == null ? void 0 : _j.analytics),
+        marketing: __spreadValues(__spreadValues({}, DEFAULT_COPY.categories.marketing), (_l = (_k = config.copy) == null ? void 0 : _k.categories) == null ? void 0 : _l.marketing),
+        personalisation: __spreadValues(__spreadValues({}, DEFAULT_COPY.categories.personalisation), (_n = (_m = config.copy) == null ? void 0 : _m.categories) == null ? void 0 : _n.personalisation)
+      }
     }),
     classNames: Object.keys(DEFAULT_CLASSNAMES).reduce((acc, key) => {
       var _a2;
       acc[key] = cn(DEFAULT_CLASSNAMES[key], (_a2 = config.classNames) == null ? void 0 : _a2[key]);
       return acc;
     }, {}),
-    categories: (_h = config.categories) != null ? _h : ALL_CATEGORIES
+    categories: (_o = config.categories) != null ? _o : ALL_CATEGORIES
   };
 }
 
@@ -155,11 +161,13 @@ function setCookie(name, value, maxAgeDays, domain) {
   if (typeof document === "undefined") return;
   const maxAge = maxAgeDays * 24 * 60 * 60;
   const domainStr = domain ? `; domain=${domain}` : "";
-  document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAge}; path=/; SameSite=Lax; Secure${domainStr}`;
+  const secureStr = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAge}; path=/; SameSite=Lax${secureStr}${domainStr}`;
 }
 function getCookie(name) {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
 function readConsentRecord(cookieName) {
@@ -167,7 +175,8 @@ function readConsentRecord(cookieName) {
   if (!raw) return null;
   try {
     const record = JSON.parse(raw);
-    if (!record.version || !record.timestamp || !record.preferences) return null;
+    if (!record.version || !record.timestamp || !record.preferences)
+      return null;
     return record;
   } catch (e) {
     return null;
@@ -175,10 +184,6 @@ function readConsentRecord(cookieName) {
 }
 function writeConsentRecord(record, cookieName, maxAgeDays, domain) {
   setCookie(cookieName, JSON.stringify(record), maxAgeDays, domain);
-  try {
-    localStorage.setItem(cookieName, JSON.stringify(record));
-  } catch (e) {
-  }
 }
 function buildConsentRecord(preferences, method, policyVersion) {
   return {
@@ -230,11 +235,37 @@ function updateConsent(prefs) {
   });
 }
 function pushConsentEvent(event, preferences) {
-  gtag({
+  if (typeof window === "undefined") return;
+  initDataLayer();
+  window.dataLayer.push({
     event,
     consent_analytics: preferences.analytics,
     consent_marketing: preferences.marketing,
     consent_personalisation: preferences.personalisation
+  });
+}
+var ANALYTICS_COOKIE_PATTERNS = [/^_ga/, /^_gid$/, /^_gat/, /^_gcl_/];
+var MARKETING_COOKIE_PATTERNS = [/^_gcl_aw$/, /^_gcl_dc$/, /^_gcl_gb$/, /^IDE$/, /^DSID$/];
+function deleteCookieOnAllPaths(name) {
+  const domains = [location.hostname, "." + location.hostname, "." + location.hostname.replace(/^www\./, "")];
+  for (const domain of domains) {
+    for (const path of ["/", "/"]) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; domain=${domain}`;
+    }
+  }
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+}
+function deleteConsentCookies(prefs) {
+  if (typeof window === "undefined") return;
+  const patterns = [];
+  if (!prefs.analytics) patterns.push(...ANALYTICS_COOKIE_PATTERNS);
+  if (!prefs.marketing) patterns.push(...MARKETING_COOKIE_PATTERNS);
+  if (patterns.length === 0) return;
+  document.cookie.split(";").forEach((c) => {
+    const name = c.trim().split("=")[0];
+    if (patterns.some((p) => p.test(name))) {
+      deleteCookieOnAllPaths(name);
+    }
   });
 }
 
@@ -277,6 +308,7 @@ function useConsentStore() {
   return useSyncExternalStore(subscribe, getState, getState);
 }
 function init(rawConfig, geoAllowed) {
+  if (state.loaded) return;
   const config = resolveConfig(rawConfig);
   initDataLayer();
   setConsentDefault(config.waitForUpdate);
@@ -289,8 +321,16 @@ function init(rawConfig, geoAllowed) {
   if (fresh && existing) {
     updateConsent(existing.preferences);
     setState({ record: existing, config, loaded: true, showBanner: false });
+  } else if (geoAllowed) {
+    setState({ config, loaded: true, showBanner: true });
   } else {
-    setState({ config, loaded: true, showBanner: geoAllowed });
+    updateConsent({
+      necessary: true,
+      analytics: config.categories.includes("analytics"),
+      marketing: config.categories.includes("marketing"),
+      personalisation: config.categories.includes("personalisation")
+    });
+    setState({ config, loaded: true, showBanner: false });
   }
 }
 function acceptAll() {
@@ -316,6 +356,7 @@ function rejectAll() {
     personalisation: false
   };
   const record = persist(prefs, "reject_all", config);
+  deleteConsentCookies(prefs);
   pushConsentEvent("consent_rejected", prefs);
   setState({ record, showBanner: false, showModal: false });
 }
@@ -324,6 +365,7 @@ function saveCustom(partial) {
   if (!config) return;
   const prefs = __spreadValues({ necessary: true }, partial);
   const record = persist(prefs, "custom", config);
+  deleteConsentCookies(prefs);
   pushConsentEvent("consent_customised", prefs);
   setState({ record, showBanner: false, showModal: false });
 }
@@ -392,8 +434,7 @@ function ConsentBanner() {
   return /* @__PURE__ */ jsxs(
     "div",
     {
-      role: "dialog",
-      "aria-modal": "true",
+      role: "region",
       "aria-label": copy.bannerTitle,
       className: cn(
         "fixed bottom-6 right-6 z-[9999] max-w-sm",
@@ -404,9 +445,30 @@ function ConsentBanner() {
         /* @__PURE__ */ jsx2("p", { className: classNames.bannerTitle, children: copy.bannerTitle }),
         /* @__PURE__ */ jsx2("p", { className: classNames.bannerDescription, children: copy.bannerDescription }),
         /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-2", children: [
-          /* @__PURE__ */ jsx2("button", { onClick: acceptAll, className: classNames.acceptButton, children: copy.acceptAll }),
-          /* @__PURE__ */ jsx2("button", { onClick: rejectAll, className: classNames.rejectButton, children: copy.rejectAll }),
-          /* @__PURE__ */ jsx2("button", { onClick: openModal, className: classNames.manageButton, children: copy.managePreferences })
+          /* @__PURE__ */ jsx2(
+            "button",
+            {
+              onClick: acceptAll,
+              className: cn([classNames.baseButton, classNames.acceptButton]),
+              children: copy.acceptAll
+            }
+          ),
+          /* @__PURE__ */ jsx2(
+            "button",
+            {
+              onClick: rejectAll,
+              className: cn([classNames.baseButton, classNames.rejectButton]),
+              children: copy.rejectAll
+            }
+          ),
+          /* @__PURE__ */ jsx2(
+            "button",
+            {
+              onClick: openModal,
+              className: cn([classNames.baseButton, classNames.manageButton]),
+              children: copy.managePreferences
+            }
+          )
         ] })
       ]
     }
@@ -511,16 +573,30 @@ function PreferencesModal() {
               /* @__PURE__ */ jsx3("p", { className: classNames.categoryDescription, children: catCopy.description })
             ] }, key)),
             /* @__PURE__ */ jsxs2("div", { className: "mt-5 flex flex-wrap justify-end gap-2", children: [
-              /* @__PURE__ */ jsx3("button", { onClick: rejectAll, className: classNames.rejectButton, children: copy.rejectAll }),
+              /* @__PURE__ */ jsx3(
+                "button",
+                {
+                  onClick: rejectAll,
+                  className: cn([classNames.baseButton, classNames.rejectButton]),
+                  children: copy.rejectAll
+                }
+              ),
               /* @__PURE__ */ jsx3(
                 "button",
                 {
                   onClick: () => saveCustom(prefs),
-                  className: classNames.saveButton,
+                  className: cn([classNames.baseButton, classNames.saveButton]),
                   children: copy.savePreferences
                 }
               ),
-              /* @__PURE__ */ jsx3("button", { onClick: acceptAll, className: classNames.acceptButton, children: copy.acceptAll })
+              /* @__PURE__ */ jsx3(
+                "button",
+                {
+                  onClick: acceptAll,
+                  className: cn([classNames.baseButton, classNames.acceptButton]),
+                  children: copy.acceptAll
+                }
+              )
             ] })
           ]
         }
@@ -529,32 +605,8 @@ function PreferencesModal() {
   );
 }
 
-// src/components/ConsentButton.tsx
-import { jsx as jsx4 } from "react/jsx-runtime";
-function ConsentButton() {
-  const { showBanner, showModal, config } = useConsentStore();
-  if (showBanner || showModal || !config) return null;
-  const { copy } = config;
-  return /* @__PURE__ */ jsx4(
-    "button",
-    {
-      onClick: openModal,
-      "aria-label": copy.cookieSettingsLabel,
-      className: cn(
-        "fixed bottom-4 right-4 z-[9999]",
-        "inline-flex items-center justify-center",
-        "rounded-full border border-neutral-200 bg-white px-3 py-1.5",
-        "text-xs font-medium text-neutral-700",
-        "shadow-sm transition-opacity hover:opacity-80",
-        "dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-      ),
-      children: copy.cookieSettingsLabel
-    }
-  );
-}
-
 // src/components/ConsentManager.tsx
-import { Fragment, jsx as jsx5, jsxs as jsxs3 } from "react/jsx-runtime";
+import { Fragment, jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
 function ConsentManager({ config, country }) {
   var _a;
   const geoAllowed = shouldShowBanner(
@@ -565,10 +617,9 @@ function ConsentManager({ config, country }) {
     init(config, geoAllowed);
   }, []);
   return /* @__PURE__ */ jsxs3(Fragment, { children: [
-    /* @__PURE__ */ jsx5(GTMScript, {}),
-    /* @__PURE__ */ jsx5(ConsentBanner, {}),
-    /* @__PURE__ */ jsx5(PreferencesModal, {}),
-    /* @__PURE__ */ jsx5(ConsentButton, {})
+    /* @__PURE__ */ jsx4(GTMScript, {}),
+    /* @__PURE__ */ jsx4(ConsentBanner, {}),
+    /* @__PURE__ */ jsx4(PreferencesModal, {})
   ] });
 }
 
@@ -591,7 +642,6 @@ function useConsent() {
 }
 export {
   ConsentBanner,
-  ConsentButton,
   ConsentManager,
   GTMScript,
   PreferencesModal,
